@@ -92,7 +92,6 @@ def main() -> int:
     import os
     import requests
     base = os.environ.get("VIDU_BASE_URL", "https://service.vidu.cn").rstrip("/")
-    site = os.environ.get("VIDU_SITE_URL", "http://vidu.cn").rstrip("/")
     token = os.environ.get("VIDU_TOKEN", "")
     if not token:
         print(json.dumps({"error": "VIDU_TOKEN is not set"}), file=sys.stderr)
@@ -100,7 +99,7 @@ def main() -> int:
     headers = {
         "Authorization": f"Token {token}",
         "Content-Type": "application/json",
-        "User-Agent": f"viduclawbot/1.0 (+{site})",
+        "User-Agent": f"viduclawbot/1.0 (+{base})",
     }
     url = f"{base}/vidu/v1/material/elements"
     try:

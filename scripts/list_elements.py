@@ -32,12 +32,11 @@ except ImportError:
     sys.exit(1)
 
 BASE_URL = os.environ.get("VIDU_BASE_URL", "https://service.vidu.cn").rstrip("/")
-SITE_URL = os.environ.get("VIDU_SITE_URL", "http://vidu.cn").rstrip("/")
 TOKEN = os.environ.get("VIDU_TOKEN", "")
 HEADERS = {
     "Authorization": f"Token {TOKEN}",
     "Content-Type": "application/json",
-    "User-Agent": f"viduclawbot/1.0 (+{SITE_URL})",
+    "User-Agent": f"viduclawbot/1.0 (+{BASE_URL})",
 }
 
 

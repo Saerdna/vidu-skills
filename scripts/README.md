@@ -15,16 +15,19 @@ All domains used by the skill are configurable via environment variables:
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | VIDU_TOKEN | yes | — | Auth token for vidu APIs |
-| VIDU_BASE_URL | no | `https://service.vidu.cn` | API base URL (service domain) |
-| VIDU_SITE_URL | no | `http://vidu.cn` | Site URL used in User-Agent (e.g. branding link) |
+| VIDU_BASE_URL | no | `https://service.vidu.cn` | API base URL (service domain, also used in User-Agent) |
+
+**Region / 地域**  
+- **中国大陆 (Mainland China)**: 使用 `https://service.vidu.cn`（默认）。  
+- **非中国地区 / 海外 (Outside China)**: 使用 `https://service.vidu.com`，需设置 `VIDU_BASE_URL=https://service.vidu.com`。
 
 Example:
 
 ```bash
 export VIDU_TOKEN=your_token
-# optional: configure domains
-export VIDU_BASE_URL=https://service.vidu.cn
-export VIDU_SITE_URL=http://vidu.cn
+# optional: configure domain (default: service.vidu.cn for China; use service.vidu.com for overseas)
+export VIDU_BASE_URL=https://service.vidu.cn   # mainland China
+# export VIDU_BASE_URL=https://service.vidu.com  # outside China
 ```
 
 ## Scripts and Examples

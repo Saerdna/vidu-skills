@@ -1,7 +1,7 @@
 ---
 name: vidu-video-generation
 description: Generate video with vidu via bundled scripts. Use when the user wants 文生视频, 图生视频, 首尾帧生视频, 参考生视频, 创建主体 (material element), or to submit or check vidu tasks. 创建主体: upload 1–3 images, name and description, call material/elements API. Execution is script-based; run scripts in scripts/ with VIDU_TOKEN set.
-compatibility: Requires ability to run Python scripts (Python 3, requests). Set VIDU_TOKEN in the environment; optionally VIDU_BASE_URL and VIDU_SITE_URL for domain configuration. See scripts/README.md for dependency and examples.
+compatibility: Requires ability to run Python scripts (Python 3, requests). Set VIDU_TOKEN in the environment; optionally VIDU_BASE_URL for domain (default https://service.vidu.cn). See scripts/README.md for dependency and examples.
 ---
 
 # Vidu Video Generation Skill
@@ -16,7 +16,7 @@ compatibility: Requires ability to run Python scripts (Python 3, requests). Set 
 - **创建主体 (script)**: Run **scripts/create_element.py** with `--name`, `--description`, 1–3 `--image` paths (and optional `--style`); uploads images then POSTs to material/elements, outputs element `id` and `version`.
 - **Step-by-step**: If you need to run individual steps, use **scripts/upload_image.py**, **scripts/create_element.py**, **scripts/list_elements.py**, **scripts/submit_task.py**, **scripts/get_task_result.py**, and **scripts/get_upload_url.py** as needed. See scripts/README.md for usage and examples.
 
-Ensure the environment has **VIDU_TOKEN** set. Domains are configurable: **VIDU_BASE_URL** (API base, default `https://service.vidu.cn`), **VIDU_SITE_URL** (User-Agent link, default `http://vidu.cn`). Scripts require Python 3 and `requests`; see **scripts/README.md** for details.
+Ensure the environment has **VIDU_TOKEN** set. **VIDU_BASE_URL** configures the service domain: **中国大陆** 使用 `https://service.vidu.cn`（默认），**海外/非中国地区** 使用 `https://service.vidu.com`。Scripts require Python 3 and `requests`; see **scripts/README.md** for details.
 
 ---
 
@@ -112,7 +112,7 @@ Before choosing script arguments, ensure the user’s request matches one of the
 
 ## Bundled resources
 
-- **scripts/** — **Use these for all execution.** See **scripts/README.md** for dependency (Python 3, requests), environment (VIDU_TOKEN, VIDU_BASE_URL, VIDU_SITE_URL), and example commands for each script.
+- **scripts/** — **Use these for all execution.** See **scripts/README.md** for dependency (Python 3, requests), environment (VIDU_TOKEN, VIDU_BASE_URL), and example commands for each script.
 - **references/api_reference.md** — Full API contracts (for understanding or when debugging).
 - **references/parameters.md** — 任务支持列表与参数约束 (supported task list and parameter constraints).
 - **references/errors_and_retry.md** — Error handling (read when interpreting failures).
@@ -121,7 +121,7 @@ Before choosing script arguments, ensure the user’s request matches one of the
 
 ## Workflow (script-based)
 
-1. **Get token and domains**: Ensure **VIDU_TOKEN** is set. Optionally set **VIDU_BASE_URL** (default `https://service.vidu.cn`) and **VIDU_SITE_URL** (default `http://vidu.cn`) to configure API and site domains.
+1. **Get token and domain**: Ensure **VIDU_TOKEN** is set. Set **VIDU_BASE_URL** by region: mainland China → `https://service.vidu.cn` (default); outside China → `https://service.vidu.com`.
 
 2. **文生视频 (text2video)**  
    `run_vidu_generation.py text2video --prompt "<user text>"`，按任务支持列表加 `--model-version 3.2|3.1`、`--duration`、`--aspect-ratio`、`--transition`（Q2 时不传 transition）。

@@ -1,6 +1,6 @@
 # Vidu API Reference
 
-Base URL: configurable via **VIDU_BASE_URL** (default `https://service.vidu.cn`). See scripts/README.md.
+Base URL: configurable via **VIDU_BASE_URL**. **中国大陆** 使用 `https://service.vidu.cn`（默认）；**海外/非中国地区** 使用 `https://service.vidu.com`。See scripts/README.md.
 
 All requests must include:
 
@@ -8,7 +8,7 @@ All requests must include:
 |--------|--------|
 | Authorization | `Token {token}` |
 | Content-Type | `application/json` |
-| User-Agent | `viduclawbot/1.0 (+{VIDU_SITE_URL})` (default VIDU_SITE_URL=`http://vidu.cn`) |
+| User-Agent | `viduclawbot/1.0 (+{VIDU_BASE_URL})` (default VIDU_BASE_URL=`https://service.vidu.cn`) |
 
 ---
 
