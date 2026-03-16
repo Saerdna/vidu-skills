@@ -1,11 +1,16 @@
 ---
 name: vidu-skills
-description: Generate video by calling the official Vidu API with curl. Use when the user wants 文生视频, 图生视频, 首尾帧生视频, 参考生视频, 创建主体 (material element), or to submit or check vidu tasks. Requires VIDU_TOKEN and optional VIDU_BASE_URL.
+description: Generate video by calling the official Vidu API with curl. Use when the user wants text-to-video (文生视频), image-to-video (图生视频), head-tail-image-to-video (首尾帧生视频), reference-to-video (参考生视频), Create References (创建参考资料), or to submit or check Vidu tasks. Requires VIDU_TOKEN and optional VIDU_BASE_URL.
 compatibility: Requires ability to run curl (or equivalent HTTP client). Set VIDU_TOKEN in the environment; VIDU_BASE_URL optional (default https://service.vidu.cn). See references/api_reference.md for full API.
 version: 1.0.1
+required_env_vars:
+  - VIDU_TOKEN
+required_binaries:
+  - curl
+credential: VIDU_TOKEN
 ---
 
-# Vidu Video Generation Skill
+# Vidu Video Generation Skill (Vidu 视频生成技能)
 
 Generate AI videos with Vidu (生数) via direct API calls — text-to-video, image-to-video, start-end frame, reference-based generation, and material elements, up to 1080p. Use curl with VIDU_TOKEN.
 
@@ -15,11 +20,11 @@ Generate AI videos with Vidu (生数) via direct API calls — text-to-video, im
 
 **Required headers for all requests:**
 
-| Header | Value |
-|--------|--------|
-| Authorization | `Token $VIDU_TOKEN` |
-| Content-Type | `application/json` |
-| User-Agent | `viduclawbot/1.0 (+$VIDU_BASE_URL)` |
+| Header        | Value                               |
+| ------------- | ----------------------------------- |
+| Authorization | `Token $VIDU_TOKEN`                 |
+| Content-Type  | `application/json`                  |
+| User-Agent    | `viduclawbot/1.0 (+$VIDU_BASE_URL)` |
 
 **Main endpoints:**
 
@@ -29,20 +34,20 @@ Generate AI videos with Vidu (生数) via direct API calls — text-to-video, im
 - **Submit task**: POST `$VIDU_BASE_URL/vidu/v1/tasks` → get `task_id` (response `id`)
 - **Get task result**: GET `$VIDU_BASE_URL/vidu/v1/tasks/{task_id}` → get `state`, `creations[].nomark_uri`
 - **Task state (SSE)**: GET `$VIDU_BASE_URL/vidu/v1/tasks/state?id={task_id}` with `Accept: text/event-stream` — return SSE stream to the user; do not wait for terminal state. Events include `state`, `estimated_time_left`, `err_code`, **queue_wait_time** (排队预测时间, unit: minutes).
-- **Pre-process element**: POST `$VIDU_BASE_URL/vidu/v1/material/elements/pre-process`
-- **Create element**: POST `$VIDU_BASE_URL/vidu/v1/material/elements`
+- **Pre-process reference**: POST `$VIDU_BASE_URL/vidu/v1/material/elements/pre-process`
+- **Create reference**: POST `$VIDU_BASE_URL/vidu/v1/material/elements`
 - **List elements**: GET `$VIDU_BASE_URL/vidu/v1/material/elements/personal`
 
 ---
 
 ## Key Capabilities
 
-- **文生视频 (text2video)** — POST `/vidu/v1/tasks` with `type: "text2video"`, `input.prompts` (text only), `settings`.
-- **图生视频 (img2video)** — Upload one image (Create upload → PUT → Finish) to get `ssupload:?id=...`; then POST `/vidu/v1/tasks` with `type: "img2video"`, prompts (text + image).
-- **首尾帧生视频 (headtailimg2video)** — Upload two images; POST `/vidu/v1/tasks` with `type: "headtailimg2video"`, prompts (text + image1 + image2).
-- **参考生视频 (character2video)** — Image(s) + material(s) + text (text required; image + material combined at most 7). POST `/vidu/v1/tasks` with `type: "character2video"`; Q2 only, do not send `transition`.
-- **创建主体** — POST pre-process → POST material/elements (images must be uploaded first). Query list: GET `/vidu/v1/material/elements/personal`.
-- **查询任务** — GET `/vidu/v1/tasks/{task_id}` for result; or GET `/vidu/v1/tasks/state?id={task_id}` for SSE stream.
+- **text-to-video (文生视频)** — POST `/vidu/v1/tasks` with `type: "text2video"`, `input.prompts` (text only), `settings`.
+- **image-to-video (图生视频)** — Upload one image (Create upload → PUT → Finish) to get `ssupload:?id=...`; then POST `/vidu/v1/tasks` with `type: "img2video"`, prompts (text + image).
+- **head-tail-image-to-video (首尾帧生视频)** — Upload two images; POST `/vidu/v1/tasks` with `type: "headtailimg2video"`, prompts (text + image1 + image2).
+- **reference-to-video (参考生视频)** — Image(s) + reference(s) + text (text required; image + reference combined at most 7). POST `/vidu/v1/tasks` with `type: "character2video"`; Q2 only, do not send `transition`.
+- **Create References (创建主体)** — POST pre-process → POST material/elements (images must be uploaded first). Query list: GET `/vidu/v1/material/elements/personal`.
+- **Query task (查询任务)** — GET `/vidu/v1/tasks/{task_id}` for result; or GET `/vidu/v1/tasks/state?id={task_id}` for SSE stream.
 
 ---
 
@@ -50,15 +55,32 @@ Generate AI videos with Vidu (生数) via direct API calls — text-to-video, im
 
 1. Obtain a VIDU token (e.g. from the official Vidu console).
 2. Set environment variables:
-   - `export VIDU_TOKEN="your-token"` (required)
-   - `export VIDU_BASE_URL=https://service.vidu.cn` (mainland China, default) or `https://service.vidu.com` (overseas)
+   - `export VIDU_TOKEN="your-token"` (required / 必填)
+   - `export VIDU_BASE_URL=https://service.vidu.cn` (mainland China / 国内, default / 默认) or `https://service.vidu.com` (overseas / 海外)
 3. **Dependency**: curl or any HTTP client that can send JSON and binary PUT. No Python or scripts required for execution.
 
 ---
 
-## Data usage note
+## Data usage and privacy note
 
-This skill sends user-provided text prompts, image data, and task parameters to the Vidu API (service.vidu.cn or service.vidu.com) for video generation. Input data is not persisted locally beyond what is needed for the request. Data handling follows Vidu’s official policy.
+**IMPORTANT**: This skill sends user-provided data to Vidu’s servers:
+
+- Text prompts → Vidu API
+- Image bytes (uploaded files) → Vidu API servers (service.vidu.cn or service.vidu.com)
+- Task parameters (settings, model version, etc.)
+
+Before using this skill, confirm that sending your content to Vidu is acceptable for your privacy and intellectual property requirements. Data handling follows Vidu’s official policy.
+
+**Security recommendations**:
+
+- Create a token with limited scope if possible
+- Avoid using production/privileged tokens for initial testing
+- Review Vidu’s terms of service and privacy policy
+
+**Vidu Terms & Privacy**:
+
+- Overseas: https://www.vidu.com/terms
+- Mainland China: https://www.vidu.cn/terms
 
 ---
 
@@ -66,43 +88,44 @@ This skill sends user-provided text prompts, image data, and task parameters to 
 
 Vidu video generation is **asynchronous**: submit a task → get **task_id** → use task_id to **query** status/result (GET `/vidu/v1/tasks/{task_id}` or SSE `/vidu/v1/tasks/state?id=`) when needed.
 
-- **文生视频 (text2video)**: Text only. Q3 duration 1–16, aspect ratios 16:9/9:16/1:1/4:3/3:4, transition pro/speed; Q2 duration 2–8, do not send transition.
-- **图生视频 (img2video)**: **One image + one text**. Aspect ratio from input image (do not send aspect_ratio). Q3 duration 1–16, Q2 duration 2–8, transition pro/speed.
-- **首尾帧生视频 (headtailimg2video)**: **Two images (start frame, end frame) + one text**. Q3 1–16s, Q2 2–8s, transition pro/speed.
-- **参考生视频 (character2video)**: **Image + material + text** (combinations); **text required**. **Image + material at most 7**, at least one. Q2 only, duration 2–8, **do not send transition**. Reference materials in prompts via `type: "material"`, `material.id`, `material.version`.
-- **创建主体 (Create element)**: Upload 1–3 images, name and optional description; **must** call POST `/vidu/v1/material/elements/pre-process` first, then POST `/vidu/v1/material/elements`. Use pre-process `recaption` when description is omitted. Response includes element `id` and `version` for character2video.
-- **查询主体**: GET `/vidu/v1/material/elements/personal` with `pager.page`, `pager.pagesz`, `keyword`, `modalities`; returns `elements[].id`, `version`.
+- **text-to-video (文生视频)**: Text only. Q3 duration 1–16, aspect ratios 16:9/9:16/1:1/4:3/3:4, transition pro/speed; Q2 duration 2–8, do not send transition.
+- **image-to-video (图生视频)**: **One image + one text**. Aspect ratio from input image (do not send aspect_ratio). Q3 duration 1–16, Q2 duration 2–8, transition pro/speed.
+- **head-tail-image-to-video (首尾帧生视频)**: **Two images (start frame, end frame) + one text**. Q3 1–16s, Q2 2–8s, transition pro/speed.
+- **reference-to-video (参考生视频)**: **Image + reference + text** (combinations); **text required**. **Image + reference at most 7**, at least one. Q2 only, duration 2–8, **do not send transition**. References in prompts via `type: "material"`, `material.id`, `material.version`.
+- **Create References (创建主体)**: Upload 1–3 images, name and optional description; **must** call POST `/vidu/v1/material/elements/pre-process` first, then POST `/vidu/v1/material/elements`. Use pre-process `recaption` when description is omitted. Response includes element `id` and `version` for reference-to-video.
+- **Search References (查询主体)**: GET `/vidu/v1/material/elements/personal` with `pager.page`, `pager.pagesz`, `keyword`, `modalities`; returns `elements[].id`, `version`.
 
-See **任务支持列表** below and **references/parameters.md**.
+See **Supported task list** below and **references/parameters.md**.
 
 ---
 
-## 任务支持列表 (Supported task list)
+## Supported Task List
 
 When building the POST `/vidu/v1/tasks` body, ensure the user’s request matches one of the supported task types and constraints below. All parameters are passed in the request **body** (type, input.prompts, settings). **references/parameters.md** has the same list for quick lookup.
 
-**模型版本 (Model version)**  
-- **Q3** → `model_version: "3.2"`  
+**Model version**
+
+- **Q3** → `model_version: "3.2"`
 - **Q2** → `model_version: "3.1"`
 
-| 任务类型 | type | 输入 | 模型 | 时长(秒) | 宽高比 | 生成模式 transition | 清晰度 |
-|----------|------|------|------|----------|--------|----------------------|--------|
-| 文生视频 | text2video | 一段文字 | Q3 | 1–16 | 16:9, 9:16, 1:1, 4:3, 3:4 | pro(电影大片), speed(闪电出片) | 1080p |
-| 文生视频 | text2video | 一段文字 | Q2 | 2–8 | 16:9, 9:16, 1:1, 4:3, 3:4 | 不传 | 1080p |
-| 图生视频 | img2video | **一张图 + 一段文字** | Q3 | 1–16 | **依据输入图片，参数不传** | pro, speed | 1080p |
-| 图生视频 | img2video | 一张图 + 一段文字 | Q2 | 2–8 | 依据输入图片，不传 | pro, speed | 1080p |
-| 首尾帧生视频 | headtailimg2video | **两张图 + 一段文字** | Q3 | 1–16 | — | pro, speed | 1080p |
-| 首尾帧生视频 | headtailimg2video | 两张图 + 一段文字 | Q2 | 2–8 | — | pro, speed | 1080p |
-| 参考生视频 | character2video | **图+主体+文字（文字必填；图+主体合计最多7）** | Q2 | 2–8 | — | **不传** | 1080p |
+| Task Type                               | type (API)        | Input                               | Model | Duration | Aspect Ratio              | Transition | Resolution |
+| --------------------------------------- | ----------------- | ----------------------------------- | ----- | -------- | ------------------------- | ---------- | ---------- |
+| text-to-video (文生视频)                | text2video        | text only                           | Q3    | 1–16s    | 16:9, 9:16, 1:1, 4:3, 3:4 | pro, speed | 1080p      |
+| text-to-video (文生视频)                | text2video        | text only                           | Q2    | 2–8s     | 16:9, 9:16, 1:1, 4:3, 3:4 | —          | 1080p      |
+| image-to-video (图生视频)               | img2video         | 1 image + text                      | Q3    | 1–16s    | from image                | pro, speed | 1080p      |
+| image-to-video (图生视频)               | img2video         | 1 image + text                      | Q2    | 2–8s     | from image                | pro, speed | 1080p      |
+| head-tail-image-to-video (首尾帧生视频) | headtailimg2video | 2 images + text                     | Q3    | 1–16s    | —                         | pro, speed | 1080p      |
+| head-tail-image-to-video (首尾帧生视频) | headtailimg2video | 2 images + text                     | Q2    | 2–8s     | —                         | pro, speed | 1080p      |
+| reference-to-video (参考生视频)         | character2video   | image + reference + text (required) | Q2    | 2–8s     | —                         | —          | 1080p      |
 
-- **文生视频**: Text only; do not send transition for Q2.
-- **图生视频**: Exactly **1 image + 1 text**; do not send `aspect_ratio` in settings.
-- **首尾帧生视频**: Exactly **2 images (start, end) + 1 text**; order is start frame then end frame.
-- **参考生视频**: **Image + material + text** (text required; image + material combined at most 7); Q2 only; **do not send transition**.
+- **text-to-video (文生视频)**: Text only; do not send transition for Q2.
+- **image-to-video (图生视频)**: Exactly **1 image + 1 text**; do not send `aspect_ratio` in settings.
+- **head-tail-image-to-video (首尾帧生视频)**: Exactly **2 images (start, end) + 1 text**; order is start frame then end frame.
+- **reference-to-video (参考生视频)**: **Image + reference + text** (text required; image + reference combined at most 7); Q2 only; **do not send transition**.
 
 ---
 
-## 创建主体（先 pre-process，再 POST /vidu/v1/material/elements）
+## Create References
 
 Create a material element for use in character2video: upload 1–3 images, name and description; API returns element `id` and `version`. **Flow**: **First** call **POST** `$VIDU_BASE_URL/vidu/v1/material/elements/pre-process` (required even if user provides description; body: `components`, `name`, `type: "user"`). Response includes `recaption` (style, description). Then call **POST** `$VIDU_BASE_URL/vidu/v1/material/elements` with the pre-process response `id`, same `components`, and `recaption` (or user description).
 
@@ -114,17 +137,17 @@ Create a material element for use in character2video: upload 1–3 images, name 
 
 ---
 
-## 查询主体（GET /vidu/v1/material/elements/personal）
+## Search References
 
 - **URL**: GET `$VIDU_BASE_URL/vidu/v1/material/elements/personal`
 - **Query**: `pager.page`, `pager.pagesz`, `pager.page_token` (optional), `keyword` (URL-encoded), `modalities` (e.g. `modalities=image`).
-- **Response**: `elements[]` with `id`, `name`, `version`, etc.; use `id` and `version` in character2video prompts.
+- **Response**: `elements[]` with `id`, `name`, `version`, etc.; use `id` and `version` in reference-to-video prompts.
 
 ---
 
-## 参考生任务中引用主体（character2video）
+## Using References in reference-to-video
 
-Materials are used only in **character2video**. When submitting POST `/vidu/v1/tasks`: `type: "character2video"`; `input.prompts` must include **(1) text prompt (required)**; (2) optional image prompt (`type: "image"`); (3) optional material prompt (`type: "material"`, `name`, `material: { "id", "version" }`). Combine image + material + text; text required; **image + material at most 7**, at least one.
+References are used only in **reference-to-video**. When submitting POST `/vidu/v1/tasks`: `type: "character2video"`; `input.prompts` must include **(1) text prompt (required)**; (2) optional image prompt (`type: "image"`); (3) optional reference prompt (`type: "material"`, `name`, `material: { "id", "version" }`). Combine image + reference + text; text required; **image + reference at most 7**, at least one.
 
 **Example body**:
 
@@ -132,14 +155,28 @@ Materials are used only in **character2video**. When submitting POST `/vidu/v1/t
 {
   "input": {
     "prompts": [
-      { "type": "text", "content": "[@艾莉娅]" },
-      { "type": "material", "name": "艾莉娅", "material": { "id": "3073530415201165", "version": "1765430214" } }
+      { "type": "text", "content": "[@aliya]" },
+      {
+        "type": "material",
+        "name": "aliya",
+        "material": { "id": "3073530415201165", "version": "1765430214" }
+      }
     ],
     "editor_mode": "normal",
     "enhance": true
   },
   "type": "character2video",
-  "settings": { "duration": 5, "resolution": "1080p", "movement_amplitude": "auto", "aspect_ratio": "16:9", "sample_count": 1, "schedule_mode": "normal", "codec": "h265", "model_version": "3.1", "use_trial": false }
+  "settings": {
+    "duration": 5,
+    "resolution": "1080p",
+    "movement_amplitude": "auto",
+    "aspect_ratio": "16:9",
+    "sample_count": 1,
+    "schedule_mode": "normal",
+    "codec": "h265",
+    "model_version": "3.1",
+    "use_trial": false
+  }
 }
 ```
 
@@ -157,7 +194,7 @@ Materials are used only in **character2video**. When submitting POST `/vidu/v1/t
 
 **Summary**: Submit (POST `/vidu/v1/tasks` → get `task_id`) → Query (GET `/vidu/v1/tasks/{task_id}` or SSE `/vidu/v1/tasks/state?id=`) → Get video from `creations[].nomark_uri`.
 
-### 1. 文生视频 — Submit (curl example)
+### 1. text-to-video (文生视频) — Submit (curl example)
 
 ```bash
 curl -s -X POST "$VIDU_BASE_URL/vidu/v1/tasks" \
@@ -187,7 +224,7 @@ curl -s -X POST "$VIDU_BASE_URL/vidu/v1/tasks" \
 
 Response contains `id` (task_id). Use it to query.
 
-### 2. 查询任务结果 (curl example)
+### 2. Query Task Result (curl example)
 
 ```bash
 curl -s "$VIDU_BASE_URL/vidu/v1/tasks/$TASK_ID" \
@@ -199,7 +236,7 @@ curl -s "$VIDU_BASE_URL/vidu/v1/tasks/$TASK_ID" \
 - On **success**: use `creations[].nomark_uri` as the video URL(s).
 - On **failed**: use `err_code`, `err_msg` to report to the user.
 
-### 3. 任务状态 SSE (optional, stream to user)
+### 3. Task Status SSE (任务状态 SSE) (optional, stream to user)
 
 ```bash
 curl -N -s "$VIDU_BASE_URL/vidu/v1/tasks/state?id=$TASK_ID" \
@@ -210,7 +247,7 @@ curl -N -s "$VIDU_BASE_URL/vidu/v1/tasks/state?id=$TASK_ID" \
 
 Return the SSE output directly to the user; do not wait for a terminal state.
 
-### 4. 图片上传（图生视频 / 首尾帧 / 创建主体前）
+### 4. Image Upload (图片上传) (image-to-video / head-tail-image-to-video / Create References)
 
 **Step 1 — Create upload:**
 
@@ -248,7 +285,7 @@ curl -s -X PUT "$VIDU_BASE_URL/tools/v1/files/uploads/$UPLOAD_ID/finish" \
 
 Use `ssupload:?id=$UPLOAD_ID` in task prompts or in element `components`.
 
-### 5. 创建主体（curl flow）
+### 5. Create References (创建主体) (curl flow)
 
 After uploading 1–3 images to get `ssupload:?id=...`:
 
@@ -260,9 +297,9 @@ After uploading 1–3 images to get `ssupload:?id=...`:
 
 ## Implementation Guide
 
-1. **Determine task type**: text2video, img2video, headtailimg2video, character2video, or 创建主体.
-2. **Choose parameters**: From 任务支持列表 select `model_version` (Q2/Q3), `duration`, `aspect_ratio`, `transition` (omit for img2video aspect_ratio, character2video transition).
-3. **Prepare inputs**: For img2video/headtailimg2video/character2video or 创建主体, upload image(s) via Create upload → PUT → Finish to get `ssupload:?id=...`. For character2video with materials, ensure elements exist (create via pre-process + create element if needed).
+1. **Determine task type**: text-to-video, image-to-video, head-tail-image-to-video, reference-to-video, or Create References.
+2. **Choose parameters**: From Supported Task List select `model_version` (Q2/Q3), `duration`, `aspect_ratio`, `transition` (omit for image-to-video aspect_ratio, reference-to-video transition).
+3. **Prepare inputs**: For image-to-video/head-tail-image-to-video/reference-to-video or Create References, upload image(s) via Create upload → PUT → Finish to get `ssupload:?id=...`. For reference-to-video with references, ensure elements exist (create via pre-process + create reference if needed).
 4. **Submit**: curl POST `$VIDU_BASE_URL/vidu/v1/tasks` with JSON body (type, input.prompts, settings). Capture `id` as task_id.
 5. **Query**: curl GET `$VIDU_BASE_URL/vidu/v1/tasks/{task_id}` (or use SSE) until state is success/failed; on success return `creations[].nomark_uri`; on failure return err_code/err_msg.
 
@@ -270,10 +307,10 @@ After uploading 1–3 images to get `ssupload:?id=...`:
 
 ## Prompt Tips
 
-- **文生视频**: Include scene and action; you can add camera direction (e.g. “镜头缓慢左移”, “特写跟拍”).
-- **图生视频**: Describe what motion or change happens in the scene.
-- **首尾帧**: Similar start/end frames give smooth transition; very different frames can be used for morphing effects.
-- **参考生视频**: Create the material first; in the text prompt use references like `[@主体名]`; ensure text is always present.
+- **text-to-video (文生视频)**: Include scene and action; you can add camera direction (e.g. “镜头缓慢左移”, “特写跟拍”).
+- **image-to-video (图生视频)**: Describe what motion or change happens in the scene.
+- **head-tail-image-to-video (首尾帧)**: Similar start/end frames give smooth transition; very different frames can be used for morphing effects.
+- **reference-to-video (参考生视频)**: Create the reference first; in the text prompt use references like `[@reference_name]`; ensure text is always present.
 
 ---
 
