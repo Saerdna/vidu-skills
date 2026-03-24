@@ -2,12 +2,12 @@
 name: vidu-skills
 description: Generate video and images by calling the official Vidu API with curl. Use when the user wants text-to-image (文生图), text-to-video (文生视频), image-to-video (图生视频), head-tail-image-to-video (首尾帧生视频), reference-to-image (参考生图), reference-to-video (参考生视频), Create References (创建参考资料), or to submit or check Vidu tasks. Requires VIDU_TOKEN and optional VIDU_BASE_URL.
 compatibility: Requires ability to run curl (or equivalent HTTP client). Set VIDU_TOKEN in the environment; VIDU_BASE_URL optional (default https://service.vidu.cn). See references/api_reference.md for full API.
-version: 1.0.3
-required_env_vars:
+version: 1.0.6
+url: https://www.vidu.cn/
+secrets:
   - VIDU_TOKEN
-required_binaries:
+dependencies:
   - curl
-credential: VIDU_TOKEN
 ---
 
 # Vidu Video and Image Generation Skill (Vidu 音视频/图像生成技能)
@@ -47,7 +47,7 @@ Generate AI videos and images with Vidu (生数) via direct API calls — text-t
 - **image-to-video (图生视频)** — Upload one image (Create upload → PUT → Finish) to get `ssupload:?id=...`; then POST `/vidu/v1/tasks` with `type: "img2video"`, prompts (text + image).
 - **head-tail-image-to-video (首尾帧生视频)** — Upload two images; POST `/vidu/v1/tasks` with `type: "headtailimg2video"`, prompts (text + image1 + image2).
 - **reference-to-image (参考生图)** — Image(s) + reference(s) + text (text required; image + reference combined at most 7). POST `/vidu/v1/tasks` with `type: "reference2image"`; Q2 only, do not send `transition`, `duration` is 0.
-- **reference-to-video (参考生视频)** — Image(s) + reference(s) + text (text required; image + reference combined at most 7). POST `/vidu/v1/tasks` with `type: "character2video"`; Q2 only, do not send `transition`.
+- **reference-to-video (参考生视频)** — Image(s) + reference(s) + text (text required; image + reference combined at most 7). POST `/vidu/v1/tasks` with `type: "character2video"`; Q3 or Q2, do not send `transition`.
 - **Create References (创建主体)** — POST pre-process → POST material/elements (images must be uploaded first). Query list: GET `/vidu/v1/material/elements/personal`.
 - **Query task (查询任务)** — GET `/vidu/v1/tasks/{task_id}` for result; or GET `/vidu/v1/tasks/state?id={task_id}` for SSE stream.
 
@@ -95,7 +95,7 @@ Vidu media generation is **asynchronous**: submit a task → get **task_id** →
 - **image-to-video (图生视频)**: **One image + one text**. Aspect ratio from input image (do not send aspect_ratio). Q3 duration 1–16, Q2 duration 2–8, transition pro/speed.
 - **head-tail-image-to-video (首尾帧生视频)**: **Two images (start frame, end frame) + one text**. Q3 1–16s, Q2 2–8s, transition pro/speed.
 - **reference-to-image (参考生图)**: **Image + reference + text** (combinations); **text required**. **Image + reference at most 7**, at least one. Q2 only, duration 0, reference via `type: "material"`.
-- **reference-to-video (参考生视频)**: **Image + reference + text** (combinations); **text required**. **Image + reference at most 7**, at least one. Q2 only, duration 2–8, **do not send transition**. References in prompts via `type: "material"`, `material.id`, `material.version`.
+- **reference-to-video (参考生视频)**: **Image + reference + text** (combinations); **text required**. **Image + reference at most 7**, at least one. Q3 duration 1–16, Q2 duration 2–8. Do **not** send transition. References in prompts via `type: "material"`, `material.id`, `material.version`.
 - **Create References (创建主体)**: Upload 1–3 images, name and optional description; **must** call POST `/vidu/v1/material/elements/pre-process` first, then POST `/vidu/v1/material/elements`. Use pre-process `recaption` when description is omitted. Response includes element `id` and `version` for reference-to-video.
 - **Search References (查询主体)**: GET `/vidu/v1/material/elements/personal` with `pager.page`, `pager.pagesz`, `keyword`, `modalities`; returns `elements[].id`, `version`.
 
@@ -122,14 +122,15 @@ When building the POST `/vidu/v1/tasks` body, ensure the user’s request matche
 | head-tail-image-to-video (首尾帧生视频) | headtailimg2video | 2 images + text                     | Q3    | 1–16s    | —                         | pro, speed | 1080p       |
 | head-tail-image-to-video (首尾帧生视频) | headtailimg2video | 2 images + text                     | Q2    | 2–8s     | —                         | pro, speed | 1080p       |
 | reference-to-image (参考生图)           | reference2image   | image + reference + text (required) | Q2    | 0        | 4:3, 3:4, 1:1, 9:16, 16:9 | —          | 1080p/2K/4K |
-| reference-to-video (参考生视频)         | character2video   | image + reference + text (required) | Q2    | 2–8s     | —                         | —          | 1080p       |
+| reference-to-video (参考生视频)         | character2video   | image + reference + text (required) | Q3    | 1–16s    | 16:9, 9:16, 1:1, 4:3, 3:4 | —          | 1080p       |
+| reference-to-video (参考生视频)         | character2video   | image + reference + text (required) | Q2    | 2–8s     | 16:9, 9:16, 1:1, 4:3, 3:4 | —          | 1080p       |
 
 - **text-to-image (文生图)**: Text only; set model_version to 3.1, duration to 0, resolution defaults to 2K (1080p/2K/4K).
 - **text-to-video (文生视频)**: Text only; do not send transition for Q2.
 - **image-to-video (图生视频)**: Exactly **1 image + 1 text**; do not send `aspect_ratio` in settings.
 - **head-tail-image-to-video (首尾帧生视频)**: Exactly **2 images (start, end) + 1 text**; order is start frame then end frame.
 - **reference-to-image (参考生图)**: **Image + reference + text**; Q2 only, duration 0, resolution defaults to 2K, do not send transition.
-- **reference-to-video (参考生视频)**: **Image + reference + text** (text required; image + reference combined at most 7); Q2 only; **do not send transition**.
+- **reference-to-video (参考生视频)**: **Image + reference + text** (text required; image + reference combined at most 7); Q3 or Q2; **不要传 transition**.
 
 ---
 
@@ -253,7 +254,7 @@ curl -N -s "$VIDU_BASE_URL/vidu/v1/tasks/state?id=$TASK_ID" \
   -H "User-Agent: viduclawbot/1.0 (+$VIDU_BASE_URL)"
 ```
 
-Return the SSE output directly to the user; do not wait for a terminal state.
+Return the SSE output directly to the user; do not wait for a terminal state. **Warning for Agents**: SSE streams continuous events which may produce large output. Ensure you either read a limited number of events or avoid autonomous streaming loops.
 
 ### 4. Image Upload (图片上传) (image-to-video / head-tail-image-to-video / Create References)
 
@@ -308,7 +309,7 @@ After uploading 1–3 images to get `ssupload:?id=...`:
 1. **Determine task type**: text-to-image, text-to-video, image-to-video, head-tail-image-to-video, reference-to-image, reference-to-video, or Create References.
 2. **Choose parameters**: From Supported Task List select `model_version` (Q2/Q3), `duration`, `aspect_ratio`, `transition` (omit for image-to-video aspect_ratio, reference-to-video transition).
 3. **Prepare inputs**: For image-to-video/head-tail-image-to-video/reference-to-video or Create References, upload image(s) via Create upload → PUT → Finish to get `ssupload:?id=...`. For reference-to-video with references, ensure elements exist (create via pre-process + create reference if needed).
-4. **Submit**: curl POST `$VIDU_BASE_URL/vidu/v1/tasks` with JSON body (type, input.prompts, settings). Capture `id` as task_id.
+4. **Submit**: curl POST `$VIDU_BASE_URL/vidu/v1/tasks` with JSON body (type, input.prompts, settings). Always include `"enhance": true` in `input` (required). Capture `id` as task_id.
 5. **Query**: curl GET `$VIDU_BASE_URL/vidu/v1/tasks/{task_id}` (or use SSE) until state is success/failed; on success return `creations[].nomark_uri`; on failure return err_code/err_msg.
 
 ---

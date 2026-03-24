@@ -4,11 +4,11 @@ Base URL: configurable via **VIDU_BASE_URL**. **中国大陆** 使用 `https://s
 
 All requests must include:
 
-| Header | Value |
-|--------|--------|
-| Authorization | `Token {token}` |
-| Content-Type | `application/json` |
-| User-Agent | `viduclawbot/1.0 (+{VIDU_BASE_URL})` (default VIDU_BASE_URL=`https://service.vidu.cn`) |
+| Header        | Value                                                                                  |
+| ------------- | -------------------------------------------------------------------------------------- |
+| Authorization | `Token {token}`                                                                        |
+| Content-Type  | `application/json`                                                                     |
+| User-Agent    | `viduclawbot/1.0 (+{VIDU_BASE_URL})` (default VIDU_BASE_URL=`https://service.vidu.cn`) |
 
 ---
 
@@ -105,11 +105,11 @@ Pre-process before creating a material element. **This step is required** — ca
 
 **Request body:**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| components | array | yes | 1–3 items. One with `type: "main"`, rest with `type: "auxiliary"`. Each: `content` = `ssupload:?id={upload_id}`, `src_img` = `ssupload:?id={upload_id}`, `content_type: "image"` |
-| name | string | yes | Subject name (e.g. element_name) |
-| type | string | yes | `"user"` |
+| Field      | Type   | Required | Description                                                                                                                                                                      |
+| ---------- | ------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| components | array  | yes      | 1–3 items. One with `type: "main"`, rest with `type: "auxiliary"`. Each: `content` = `ssupload:?id={upload_id}`, `src_img` = `ssupload:?id={upload_id}`, `content_type: "image"` |
+| name       | string | yes      | Subject name (e.g. element_name)                                                                                                                                                 |
+| type       | string | yes      | `"user"`                                                                                                                                                                         |
 
 **Response:** `id`, `name`, `type`, `creator_id`, `recaption` (object with `style`, `description` — vidu-generated description), `modality`. Use `recaption.description` and optionally `recaption.style` in the create-element body when the user does not provide them.
 
@@ -123,15 +123,15 @@ Create a material element (subject) with 1–3 images, a name, and a description
 
 **Request body:**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| id | string/number | yes | Element id from pre-process (3b) response; must be included when creating |
-| name | string | yes | Subject name |
-| modality | string | yes | `"image"` |
-| type | string | yes | `"user"` |
-| components | array | yes | 1–3 items. One with `type: "main"` (core image), rest with `type: "auxiliary"`. Each: `content` = `ssupload:?id={upload_id}`, `src_img` = `ssupload:?id={upload_id}`, `content_type: "image"` |
-| version | string | yes | e.g. `"0"` |
-| recaption | object | yes | `description` (required), `style` (optional) |
+| Field      | Type          | Required | Description                                                                                                                                                                                   |
+| ---------- | ------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| id         | string/number | yes      | Element id from pre-process (3b) response; must be included when creating                                                                                                                     |
+| name       | string        | yes      | Subject name                                                                                                                                                                                  |
+| modality   | string        | yes      | `"image"`                                                                                                                                                                                     |
+| type       | string        | yes      | `"user"`                                                                                                                                                                                      |
+| components | array         | yes      | 1–3 items. One with `type: "main"` (core image), rest with `type: "auxiliary"`. Each: `content` = `ssupload:?id={upload_id}`, `src_img` = `ssupload:?id={upload_id}`, `content_type: "image"` |
+| version    | string        | yes      | e.g. `"0"`                                                                                                                                                                                    |
+| recaption  | object        | yes      | `description` (required), `style` (optional)                                                                                                                                                  |
 
 **Response:** Element object including `id` and `version`; use these when submitting character2video tasks.
 
@@ -153,24 +153,24 @@ Create a material element (subject) with 1–3 images, a name, and a description
 
 **Request body:** JSON with the following top-level fields.
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| type | string | yes | `"text2image"`, `"text2video"`, `"img2video"`, `"headtailimg2video"`, `"character2video"`, or `"reference2image"` (subject/material only in character2video and reference2image) |
-| input | object | yes | See Input below |
-| settings | object | yes | See Settings below. For img2video do not send aspect_ratio; for character2video and reference2image do not send transition (Q2 only). |
+| Field    | Type   | Required | Description                                                                                                                                                                      |
+| -------- | ------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| type     | string | yes      | `"text2image"`, `"text2video"`, `"img2video"`, `"headtailimg2video"`, `"character2video"`, or `"reference2image"` (subject/material only in character2video and reference2image) |
+| input    | object | yes      | See Input below                                                                                                                                                                  |
+| settings | object | yes      | See Settings below. For img2video do not send aspect_ratio; for reference2image and character2video do not send transition.                                                      |
 
 **Input:**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| prompts | array | yes | List of prompt objects (text, image, and/or material). Max 20. For character2video and reference2image: **text required**; image + material combined at most 7 (图+主体合计最多7). |
-| editor_mode | string | no | `"normal"` typical |
-| enhance | boolean | no | Default true (recaption for text) |
+| Field       | Type    | Required | Description                                                                                                                                                                        |
+| ----------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| prompts     | array   | yes      | List of prompt objects (text, image, and/or material). Max 20. For character2video and reference2image: **text required**; image + material combined at most 7 (图+主体合计最多7). |
+| editor_mode | string  | no       | `"normal"` typical                                                                                                                                                                 |
+| enhance     | boolean | yes      | Always true (recaption for text)                                                                                                                                                   |
 
 **Prompt object (text):**
 
 ```json
-{"type": "text", "content": "your prompt text"}
+{ "type": "text", "content": "your prompt text" }
 ```
 
 **Prompt object (image):**
