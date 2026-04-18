@@ -1,8 +1,8 @@
 ---
 name: vidu-skills
-description: Generate video and images by calling the official Vidu API via vidu CLI. Use when the user wants text-to-image (文生图), text-to-video (文生视频), image-to-video (图生视频), head-tail-image-to-video (首尾帧生视频), reference-to-image (参考生图), reference-to-video (参考生视频), lip-sync (口型同步), text-to-speech (文字转语音), Create References (创建参考资料), or to submit or check Vidu tasks. Requires VIDU_TOKEN and optional VIDU_BASE_URL.
+description: Generate video and images by calling the official Vidu API via vidu CLI. Use when the user wants text-to-image, text-to-video, image-to-video, head-tail-image-to-video, reference-to-image, reference-to-video, lip-sync, text-to-speech, video-compose, Create References, or to submit or check Vidu tasks. Requires VIDU_TOKEN and optional VIDU_BASE_URL.
 compatibility: Requires vidu-cli latest (install via `npm install -g vidu-cli@latest`). Node.js >=14 required.
-version: 1.4.0
+version: 1.4.1
 url: https://www.vidu.cn/
 secrets:
   - VIDU_TOKEN
@@ -10,9 +10,9 @@ dependencies:
   - node
 ---
 
-# Vidu Video and Image Generation Skill (Vidu 音视频/图像生成技能)
+# Vidu Video and Image Generation Skill
 
-Generate AI videos and images with Vidu (生数) via `vidu-cli` — text-to-image, text-to-video, image-to-video, start-end frame, reference-based generation, and material elements, up to 1080p/2K/4K.
+Generate AI videos and images with Vidu via `vidu-cli` — text-to-image, text-to-video, image-to-video, start-end frame, reference-based generation, and material elements, up to 1080p/2K/4K.
 
 ## Execution model: use vidu CLI
 
@@ -46,11 +46,12 @@ Generate AI videos and images with Vidu (生数) via `vidu-cli` — text-to-imag
 | `vidu-cli upload <image_path>` | Upload image → `upload_id`, `ssupload_uri` |
 | `vidu-cli task submit --type ... --prompt ... [options]` | Submit task → `task_id`. `--image`: local path, URL, or `ssupload:?id=...` (auto-upload). |
 | `vidu-cli task get <task_id> [--output/-o <dir>]` | Query task → `state`, `type`, `model`; use `--output` to download media on success |
+| `vidu-cli task compose --timeline <json> [--width N --height N]` | Compose video from timeline → `task_id`. Query with `task get`. **MUST read references/compose.md before building the timeline JSON — do not guess the schema.** |
 | `vidu-cli task lip-sync --video <path> --text <text> [options]` | Lip-sync with text-to-speech → `task_id` |
 | `vidu-cli task lip-sync --video <path> --audio <path>` | Lip-sync with audio file → `task_id` |
-| `vidu-cli task lip-sync-voices` | 列出 lip-sync 可用声音（~86个，中/英/粤/卡通等） |
-| `vidu-cli task tts --prompt ... --voice-id ...` | TTS 文字转语音 → `task_id` |
-| `vidu-cli task tts-voices` | 列出 TTS 可用声音（300+个，20+语言） |
+| `vidu-cli task lip-sync-voices` | List available lip-sync voices (~86, Chinese/English/Cantonese/Cartoon etc.) |
+| `vidu-cli task tts --prompt ... --voice-id ...` | Text-to-speech → `task_id` |
+| `vidu-cli task tts-voices` | List available TTS voices (300+, 20+ languages) |
 | `vidu-cli element create --name ... --image ... [--description ...] [--style ...]` | Create reference element (check → preprocess → create). Returns `id`, `version`. |
 | `vidu-cli element check --name ...` | Check name availability |
 | `vidu-cli element list [--keyword kw]` | List personal elements |
@@ -66,17 +67,18 @@ Generate AI videos and images with Vidu (生数) via `vidu-cli` — text-to-imag
 
 ## Key Capabilities
 
-- **text-to-image (文生图)** — Text-only image generation
-- **text-to-video (文生视频)** — Text-only video generation
-- **image-to-video (图生视频)** — One image + text → video
-- **head-tail-image-to-video (首尾帧生视频)** — Start + end frames + text
-- **reference-to-image (参考生图)** — **Images + materials: 1–7** total; **text prompt required**; can be images-only, materials-only, or mixed; images-only needs no `element create`
-- **reference-to-video (参考生视频)** — Same rule: **1–7** total; **text prompt required**
-- **lip-sync (口型同步)** — Drive video mouth movement with text-to-speech or audio file
-- **text-to-speech (文字转语音)** — Convert text to speech audio via `task tts`
-- **Create References (创建主体)** — `element create` (single command)
-- **Search Community References (搜索社区主体库)** — `element search`
-- **Query task (查询任务)** — `task get [--output <dir>]`
+- **text-to-image** — Text-only image generation
+- **text-to-video** — Text-only video generation
+- **image-to-video** — One image + text → video
+- **head-tail-image-to-video** — Start + end frames + text
+- **reference-to-image** — **Images + materials: 1–7** total; **text prompt required**; can be images-only, materials-only, or mixed; images-only needs no `element create`
+- **reference-to-video** — Same rule: **1–7** total; **text prompt required**
+- **lip-sync** — Drive video mouth movement with text-to-speech or audio file
+- **text-to-speech** — Convert text to speech audio via `task tts`
+- **video-compose** — Compose multi-track timeline (video/audio/subtitle/effect) into a single exported video via `task compose`
+- **create-references** — `element create` (single command)
+- **search-community-references** — `element search`
+- **query-task** — `task get [--output <dir>]`
 
 ---
 
@@ -106,11 +108,24 @@ Content you send (prompts, images, task settings) goes to Vidu’s API. Confirm 
 
 ## Implementation guide
 
+### For task submit (generation tasks)
+
 1. Pick capability → map to `--type` and options using **references/parameters.md** (matrix + validation).
 2. Prepare inputs: for **reference2image** / **character2video**, `--image` and/or `--material` so **combined count is 1–7**; optional `[@name]` in prompt per **references/parameters.md**.
 3. `vidu-cli task submit ...` → store `task_id` and `trace_id`.
 4. `vidu-cli task get <task_id>` until `success` or `failed`; use `--output <dir>` to download media on success.
 5. On success return `downloaded_files` (if `--output` used) or prompt user to re-run with `--output`; on task failure return `err_code` / `err_msg`; on CLI `ok: false` return `error` fields verbatim.
+
+### For task compose (video composition)
+
+**CRITICAL: Before constructing the `--timeline` JSON, you MUST read **references/compose.md** first.** The timeline has a specific JSON schema with exact field names, nesting structure, and media_url rules. Do NOT guess the structure — always refer to compose.md for the complete schema, supported fields, and examples.
+
+1. Read **references/compose.md** to understand the timeline JSON schema, media_url rules, and limits.
+2. Build the timeline JSON following the exact structure: `video_tracks[].video_track_clips[]`, `audio_tracks[].audio_track_clips[]`, `subtitle_tracks[].subtitle_track_clips[]`, `effect_tracks[].effect_track_items[]`.
+3. For `media_url`: use `ssupload:?id=xxx`, http URL, or local file path (auto-uploaded by CLI).
+4. For `file_url` (subtitles): use `ssupload:?id=xxx`, http URL, or local .srt file path.
+5. `vidu-cli task compose --timeline <file_or_json> [--width N --height N]` → returns `task_id`.
+6. `vidu-cli task get <task_id>` to poll status, same as other tasks.
 
 ---
 
@@ -128,6 +143,7 @@ Content you send (prompts, images, task settings) goes to Vidu’s API. Confirm 
 |------|----------|
 | **references/parameters.md** | Task matrix, CLI flags, examples, prompt tips, validation |
 | **references/errors_and_retry.md** | States, retries, polling |
+| **references/compose.md** | Timeline schema, media_url rules, clip compose examples |
 
 ---
 
