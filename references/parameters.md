@@ -23,9 +23,9 @@ Daily use: **`vidu-cli`** flags and the sections below.
 - **text-to-video**: Text only.
 - **image-to-video**: One image + text; aspect ratio comes from the image.
 - **head-tail-image-to-video**: Two images (start, end) + text.
-- **reference2image (参考生图)** and **character2video (参考生视频)** — same input rule: **image count + material (主体) count must be ≥ 1 and ≤ 7** (each `--image` and each `--material` counts toward the total). **Text prompt (`--prompt`) is required** for both (cannot omit or leave empty).
-- **lip-sync (口型同步)**: Drive video mouth movement with text-to-speech or audio file. Two modes: **text mode** (TTS with voice selection) or **audio mode** (custom audio file). Video: MP4/MOV/AVI, ≤500MB. Audio: MP3/WAV/AAC/M4A, ≤100MB.
-- **TTS (文字转语音)**: Convert text to speech audio. Uses `task tts` command (not `task submit`). Requires `--prompt` and `--voice-id`. List voices with `task tts-voices`.
+- **reference2image** and **character2video** — same input rule: **image count + material count must be ≥ 1 and ≤ 7** (each `--image` and each `--material` counts toward the total). **Text prompt (`--prompt`) is required** for both (cannot omit or leave empty).
+- **lip-sync**: Drive video mouth movement with text-to-speech or audio file. Two modes: **text mode** (TTS with voice selection) or **audio mode** (custom audio file). Video: MP4/MOV/AVI, ≤500MB. Audio: MP3/WAV/AAC/M4A, ≤100MB.
+- **TTS**: Convert text to speech audio. Uses `task tts` command (not `task submit`). Requires `--prompt` and `--voice-id`. List voices with `task tts-voices`.
 - You **do not** need `element create` when using **`--image` only**. Use **`--material`** / `[@name]` when using a saved or community reference element (you may combine images and materials as long as the total stays in 1–7).
 - **Create References**: `vidu-cli element create --name ... --image ...` runs check → preprocess → create; returns element `id` and `version`.
 - **List personal references**: `vidu-cli element list [--keyword kw]`.
@@ -163,7 +163,7 @@ Use **`vidu-cli` flags only** — do not hand-craft request bodies or invent ext
 
 ## CLI examples
 
-### 1. text-to-video (文生视频)
+### 1. text-to-video
 
 ```bash
 vidu-cli task submit \
@@ -178,7 +178,7 @@ vidu-cli task submit \
 
 Response: `{"ok": true, "task_id": "...", "trace_id": "..."}`
 
-### 2. text-to-image (文生图)
+### 2. text-to-image
 
 ```bash
 vidu-cli task submit \
@@ -189,7 +189,7 @@ vidu-cli task submit \
   --resolution 2k
 ```
 
-### 3. image-to-video (图生视频)
+### 3. image-to-video
 
 ```bash
 vidu-cli task submit \
@@ -203,7 +203,7 @@ vidu-cli task submit \
 
 `--image` accepts local path, URL, or `ssupload:?id=...`.
 
-### 4. head-tail-image-to-video (首尾帧生视频)
+### 4. head-tail-image-to-video
 
 ```bash
 vidu-cli task submit \
@@ -216,7 +216,7 @@ vidu-cli task submit \
   --resolution 1080p
 ```
 
-### 5. reference-to-video (参考生视频)
+### 5. reference-to-video
 
 **With a saved reference (subject)** — `[@name]` matches `--material` (count toward the 1–7 total):
 
@@ -261,7 +261,7 @@ vidu-cli task submit \
   --resolution 1080p
 ```
 
-### 6. reference-to-image (参考生图)
+### 6. reference-to-image
 
 Same limits as **character2video**: **images + materials between 1 and 7**, **non-empty `--prompt` required**.
 
@@ -305,7 +305,7 @@ vidu-cli task submit \
   --resolution 2k
 ```
 
-### 7. lip-sync (口型同步)
+### 7. lip-sync
 
 **Text mode (TTS with voice selection)**:
 
@@ -341,7 +341,7 @@ vidu-cli task lip-sync \
 **Available voice IDs** (partial list, 90+ total):
 - English: `English_Aussie_Bloke`, `English_Trustworthy_Man`, `English_Graceful_Lady`, `English_Whispering_girl`, `English_Diligent_Man`, `English_Gentle-voiced_man`
 - Chinese: `male-qn-qingse`, `male-qn-jingying`, `male-qn-badao`, `male-qn-daxuesheng`, `female-shaonv`, `female-yujie`, `female-chengshu`, `female-tianmei`
-- Premium (精品): `male-qn-qingse-jingpin`, `female-shaonv-jingpin`, etc.
+- Premium: `male-qn-qingse-jingpin`, `female-shaonv-jingpin`, etc.
 - Cartoon: `clever_boy`, `cute_boy`, `lovely_girl`, `cartoon_pig`
 - Cantonese: `Cantonese_ProfessionalHost（F)`, `Cantonese_GentleLady`, `Cantonese_ProfessionalHost（M)`, `Cantonese_PlayfulMan`
 
@@ -353,7 +353,7 @@ vidu-cli task lip-sync-voices
 
 Returns: `{"ok": true, "count": 90+, "voice_ids": [...]}`
 
-### 8. TTS (Text-to-Speech, 文字转语音)
+### 8. TTS (Text-to-Speech)
 
 ```bash
 vidu-cli task tts \
@@ -429,7 +429,7 @@ vidu-cli element create \
   --name "my_character" \
   --image image1.jpg \
   --description "A young woman with long black hair" \
-  --style "写实"
+  --style "realistic"
 ```
 
 **Constraints**
@@ -445,7 +445,7 @@ Returns: `id`, `version` (for `--material` / `[@name]` usage).
 ### List personal elements
 
 ```bash
-vidu-cli element list --keyword "关键词"
+vidu-cli element list --keyword "keyword"
 ```
 
 Example shape: `elements: [{ id, version, name, ... }], next_page_token`.
@@ -453,7 +453,7 @@ Example shape: `elements: [{ id, version, name, ... }], next_page_token`.
 ### Search community elements
 
 ```bash
-vidu-cli element search --keyword "老虎" --pagesz 20
+vidu-cli element search --keyword "tiger" --pagesz 20
 ```
 
 Present results with `id`, `version`, `name`, `description`, `category` when available.
@@ -463,7 +463,7 @@ Present results with `id`, `version`, `name`, `description`, `category` when ava
 ## Prompt tips
 
 - **text-to-image**: Subject, style, lighting, composition.
-- **text-to-video**: Scene + action; optional camera language (e.g. 镜头缓慢左移, 特写跟拍).
+- **text-to-video**: Scene + action; optional camera language (e.g. slow pan left, close-up tracking shot).
 - **image-to-video**: Describe motion or change, not only static description.
 - **head-tail-image-to-video**: Similar frames → smoother transition; very different frames → stronger morph.
 - **reference-to-image / reference-to-video**: **reference2image** and **character2video** both require a **non-empty text prompt**. **Image count + material count** must be **≥ 1 and ≤ 7**. You may use images only, materials only, or a mix; without `element create` when using images only. With a saved or community reference, use `[@reference_name]` and matching `--material`.
